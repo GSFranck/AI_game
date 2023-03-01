@@ -1,13 +1,18 @@
 import sys
 import numpy as np
 
-RedScore =0
-BlackScore=0
+
 
 Black_start_row =[(0,0),(0,1),(0,2)]
 Red_start_row = [(3,0),(3,1),(3,2)]
 
-WinningScore = 5 #sys.argv[1]
+
+RedScore =0
+BlackScore=0
+
+WinningScore=5#int(input("Max score:"))
+
+
 
 
 
@@ -16,8 +21,8 @@ class Grid:
     RowSize = 4
 
     def __init__(self,grid_mat= np.zeros((RowSize,ColumnSize),dtype="U2")):
-
         self.grid_mat = grid_mat
+        
     def get_grid(self):
         return self.grid_mat
 
@@ -25,7 +30,6 @@ class Pawn:
     def __init__(self,name:str,cord=(None,None)):
         self.name = name
         self.cord = cord
-
 
 class Player:
     
@@ -47,15 +51,13 @@ class Player:
                 Pawn("R4",(None,None))
             ]
 
-
-
-
 class Action:
     def __init__(self,player=Player,grid=Grid):
         self.player=player
         self.grid=grid
         
     def get_spawns(self):
+        current_grid=self.grid.get_grid()
         possible_moves={}
         for piece in self.player.pawns:
             my_list=[]
@@ -63,7 +65,7 @@ class Action:
                 if self.player.color == 'Black':
                     
                     for field in Black_start_row:
-                        if self.grid.get_grid()[field[0],field[1]]=="":
+                        if current_grid[field[0],field[1]]=="":
                             
                             my_list.append(field)
                     possible_moves[piece.name]=my_list
@@ -79,9 +81,96 @@ class Action:
                     possible_moves[piece.name]=my_list
                     return possible_moves
     
+    def get_diagonal_moves(self):
+        current_grid=self.grid.get_grid()
+        possible_moves={}
+        for piece in self.player.pawns:
+            my_list=[]
+            if piece.cord!=(None,None):
+                if self.player.color == 'Black':
+                    current_position=piece.cord
 
-    def get_all_actions(self):
-        return self.get_spawns()
+                    if current_position[1]==0:
+                        potential_move= (current_position[0]+1,current_position[1]+1)
+                        if current_grid[potential_move[0],potential_move[1]]=="":
+                            my_list.append(potential_move)
+
+                    elif current_position[1]==1:
+                        potential_move_1= (current_position[0]+1,current_position[1]+1)
+                        potential_move_2= (current_position[0]+1,current_position[1]-1)
+                        if current_grid[potential_move_1[0],potential_move_1[1]]=="":
+                            my_list.append(potential_move_1)
+                        if current_grid[potential_move_2[0],potential_move_2[1]]=="":
+                            my_list.append(potential_move_2)
+
+                    elif current_position[1]==2:
+                        potential_move= (current_position[0]+1,current_position[1]-1)
+                        if current_grid[potential_move[0],potential_move[1]]=="":
+                            my_list.append(potential_move)
+
+                    possible_moves[piece.name]=my_list
+            
+            
+                elif self.player.color == 'Red':
+                    current_position=piece.cord
+
+                    if current_position[1]==0:
+                        potential_move= (current_position[0]-1,current_position[1]+1)
+                        if current_grid[potential_move[0],potential_move[1]]=="":
+                            my_list.append(potential_move)
+
+                    elif current_position[1]==1:
+                        potential_move_1= (current_position[0]-1,current_position[1]+1)
+                        potential_move_2= (current_position[0]-1,current_position[1]-1)
+                        if current_grid[potential_move_1[0],potential_move_1[1]]=="":
+                            my_list.append(potential_move_1)
+                        if current_grid[potential_move_2[0],potential_move_2[1]]=="":
+                            my_list.append(potential_move_2)
+
+                    elif current_position[1]==2:
+                        potential_move= (current_position[0]-1,current_position[1]-1)
+                        if current_grid[potential_move[0],potential_move[1]]=="":
+                            my_list.append(potential_move)
+
+                    possible_moves[piece.name]=my_list
+        return possible_moves
+    
+    def get_attacks(self):
+        current_grid=self.grid.get_grid()
+        possible_moves={}
+        for piece in self.player.pawns:
+            my_list=[]
+            if piece.cord!=(None,None):
+                if self.player.color == 'Black':
+                    current_position=piece.cord
+                    attack_position=(current_position[0]+1,current_position[1])
+                    
+                    if current_grid[attack_position[0],attack_position[1]]!="":
+                        if current_grid[attack_position[0],attack_position[1]][0]=="R":
+                            my_list.append(attack_position)
+                if self.player.color == 'Red':
+                    current_position=piece.cord
+                    attack_position=(current_position[0]-1,current_position[1])
+                    
+                    if current_grid[attack_position[0],attack_position[1]]!="":
+                        if current_grid[attack_position[0],attack_position[1]][0]=="B":
+                            my_list.append(attack_position)
+            possible_moves[piece.name]=my_list
+        return possible_moves
+    
+                    
+    def get_all_possible_moves(self):
+        dict_1=self.get_spawns()
+        dict_2=self.get_diagonal_moves()
+        dict_3=self.get_attacks()
+
+        all_moves={'spawns':dict_1,'diagonals':dict_2,'attacks':dict_3}
+
+        return all_moves
+
+
+
+
 
 
 class Client:
@@ -90,7 +179,7 @@ class Client:
         self.player=player
     def insert(self,dest):
         
-        possible_moves=Action(self.player,self.grid).get_all_actions()
+        possible_moves=Action(self.player,self.grid).get_spawns()
         piece=list(possible_moves.keys())[0]
         self.grid.grid_mat[dest[0],dest[1]]=piece
 
@@ -99,44 +188,104 @@ class Client:
                 pawn.cord=dest
         return self.grid
 
-"""         
-    def get_diagonals(self):
-        diagonals={}
-        if self.player.color == 'Black':
-            for piece in self.player.pawns:
-                piece_cord=piece.cord
-                if piece_cord!=(None,None):
-                    if 0<piece_cord[1]<3:
+    def diagonal_move(self,piece,dest):
+        grid_d= self.grid.grid_mat
+        grid_d[dest[0],dest[1]]=piece
+        for pawn in self.player.pawns:
+            if pawn.name==piece:
+                current_cord=pawn.cord
+                grid_d[current_cord[0],current_cord[1]]=""
+                pawn.cord=dest
+        return self.grid
 
-                    
-                
-                    
+    def attack_move(self,piece,piece_to_attack):
+        grid_a= self.grid.grid_mat
+        if self.player.color=='Black':
+            opponent=Red_player
+        else:
+            opponent=Black_player
+        
+        for pawn in opponent.pawns:
+            if pawn.name==piece_to_attack:
+                opponent_cord=pawn.cord
+                pawn.cord=(None,None)
+        for pawn in self.player.pawns:
+            if pawn.name==piece:
+                grid_a[pawn.cord[0],pawn.cord[1]]=""
+                pawn.cord=opponent_cord
+        grid_a[opponent_cord[0],opponent_cord[1]]=piece
+        
+        return grid_a
 
-                elif self.player.color == 'Red':
-                    for field in Red_start_row:
-                        if self.grid.get_grid()[field[0],field[1]]=="":
-                            spawns[piece.name]=field
-"""
+
+
     
 
 
 my_grid=Grid()
-Gustav=Player('Black')
-Line=Player('Red')
-Gustav_actions=Action(Gustav,my_grid)
-Line_actions=Action(Line,my_grid)
-#print(Gustav_actions.get_all_actions())
-#print(Line_actions.get_spawns())
-interface = Client(my_grid,Gustav)
-interface = Client(my_grid,Line)
-"""
-interface.insert((0,2))
-print(my_grid.grid_mat)
-for i in Gustav.pawns:
-    print(i.name,i.cord)
-"""
+Black_player=Player('Black')
+Red_player=Player('Red')
+Black_actions=Action(Black_player,my_grid)
+Red_actions=Action(Red_player,my_grid)
 
-wtd= input("Your possible actions are:\n {}".format(Gustav_actions.get_all_actions()))
+player_actions=Black_actions
+player=Black_player
+
+while RedScore<WinningScore and BlackScore<WinningScore:
+    current_grid=my_grid.get_grid()
+    print(current_grid)
+    Possible_actions=player_actions.get_all_possible_moves()
+    print("\nChoose among the following moves:")
+    move_list=[]
+    move_no=0
+    spawns=Possible_actions['spawns']
+    for piece in spawns.keys():
+        for i in spawns[piece]:
+            print("{0}. Insert piece {1} at {2}".format(move_no,piece,i))
+            move_no+=1
+            move_list.append(('spawn',piece,i))
+    diagonals=Possible_actions['diagonals']
+    for piece in diagonals.keys():
+        for i in diagonals[piece]:
+            print("{0}. Move piece {1} to {2}".format(move_no,piece,i))
+            move_no+=1
+            move_list.append(('diagonal',piece,i))
+    
+    attacks=Possible_actions['attacks']
+    for piece in attacks.keys():
+        for i in attacks[piece]:
+            piece_to_attack=current_grid[i[0],i[1]]
+            print("{0}. Attack piece {1} with {2}".format(move_no,piece_to_attack,piece))
+            move_no+=1
+            move_list.append(('attack',piece,piece_to_attack))
+
+    InputAction= int(input("\nI choose action numnber:\n"))
+    
+    move= move_list[InputAction]
+    move_type=move[0]
+    move_piece=move[1]
+    dest=move[2]
+    
+    player_interface=Client(my_grid,player)
+    if move_type=='spawn':
+        player_interface.insert(dest)
+    elif move_type=='diagonal':
+        player_interface.diagonal_move(move_piece,dest)
+    elif move_type=='attack':
+        player_interface.attack_move(move_piece,dest)
+
+    if player.color=='Black':
+        player_actions=Red_actions
+        player=Red_player
+    else:
+        player_actions=Black_actions
+        player=Black_player
+
+    
+
+
+    
+    
 
 
 
