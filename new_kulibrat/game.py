@@ -7,8 +7,8 @@ Black_start_row =[(0,0),(0,1),(0,2)]
 Red_start_row = [(3,0),(3,1),(3,2)]
 
 
-RedScore =0
-BlackScore=0
+#RedScore =0
+#BlackScore=0
 
 WinningScore=5#int(input("Max score:"))
 
@@ -35,6 +35,7 @@ class Player:
     
     def __init__(self,color=str,pawns=None):
         self.color = color
+        self.score = 0
         if self.color=='Black':
             self.pawns=[
                 Pawn("B1",(None,None)),
@@ -89,8 +90,10 @@ class Action:
             if piece.cord!=(None,None):
                 if self.player.color == 'Black':
                     current_position=piece.cord
-
-                    if current_position[1]==0:
+                    if current_position[0]==3:
+                        potential_move=("Goal")
+                        my_list.append(potential_move)
+                    elif current_position[1]==0:
                         potential_move= (current_position[0]+1,current_position[1]+1)
                         if current_grid[potential_move[0],potential_move[1]]=="":
                             my_list.append(potential_move)
@@ -113,7 +116,9 @@ class Action:
             
                 elif self.player.color == 'Red':
                     current_position=piece.cord
-
+                    if current_position[0]==0:
+                        potential_move=("Goal")
+                        my_list.append(potential_move)
                     if current_position[1]==0:
                         potential_move= (current_position[0]-1,current_position[1]+1)
                         if current_grid[potential_move[0],potential_move[1]]=="":
@@ -143,6 +148,8 @@ class Action:
             if piece.cord!=(None,None):
                 if self.player.color == 'Black':
                     current_position=piece.cord
+                    if current_position[0]==3:
+                        continue
                     attack_position=(current_position[0]+1,current_position[1])
                     
                     if current_grid[attack_position[0],attack_position[1]]!="":
@@ -150,6 +157,8 @@ class Action:
                             my_list.append(attack_position)
                 if self.player.color == 'Red':
                     current_position=piece.cord
+                    if current_position[0]==0:
+                        continue
                     attack_position=(current_position[0]-1,current_position[1])
                     
                     if current_grid[attack_position[0],attack_position[1]]!="":
@@ -157,12 +166,12 @@ class Action:
                             my_list.append(attack_position)
             possible_moves[piece.name]=my_list
         return possible_moves
-    
-                    
+             
     def get_all_possible_moves(self):
         dict_1=self.get_spawns()
         dict_2=self.get_diagonal_moves()
         dict_3=self.get_attacks()
+
 
         all_moves={'spawns':dict_1,'diagonals':dict_2,'attacks':dict_3}
 
@@ -190,6 +199,15 @@ class Client:
 
     def diagonal_move(self,piece,dest):
         grid_d= self.grid.grid_mat
+        if dest==(None,None):
+            for pawn in self.player.pawns:
+                if pawn.name==piece:
+                    current_cord=pawn.cord
+                    grid_d[current_cord[0],current_cord[1]]=""
+                    pawn.cord=dest
+                    self.player.score+=1
+            return self.grid
+
         grid_d[dest[0],dest[1]]=piece
         for pawn in self.player.pawns:
             if pawn.name==piece:
@@ -231,7 +249,7 @@ Red_actions=Action(Red_player,my_grid)
 player_actions=Black_actions
 player=Black_player
 
-while RedScore<WinningScore and BlackScore<WinningScore:
+while Black_player.score<WinningScore and Red_player.score<WinningScore:
     current_grid=my_grid.get_grid()
     print(current_grid)
     Possible_actions=player_actions.get_all_possible_moves()
@@ -249,7 +267,10 @@ while RedScore<WinningScore and BlackScore<WinningScore:
         for i in diagonals[piece]:
             print("{0}. Move piece {1} to {2}".format(move_no,piece,i))
             move_no+=1
+            if i=='Goal':
+                i=(None,None)
             move_list.append(('diagonal',piece,i))
+            
     
     attacks=Possible_actions['attacks']
     for piece in attacks.keys():
