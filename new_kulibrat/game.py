@@ -6,15 +6,7 @@ import numpy as np
 Black_start_row =[(0,0),(0,1),(0,2)]
 Red_start_row = [(3,0),(3,1),(3,2)]
 
-
-#RedScore =0
-#BlackScore=0
-
 WinningScore=5#int(input("Max score:"))
-
-
-
-
 
 class Grid:
     ColumnSize = 3
@@ -166,14 +158,68 @@ class Action:
                             my_list.append(attack_position)
             possible_moves[piece.name]=my_list
         return possible_moves
+
+    def get_jumps(self):
+        current_grid=self.grid.get_grid()
+        possible_moves={}
+        for piece in self.player.pawns:
+            my_list=[]
+            if piece.cord!=(None,None):
+                if self.player.color == 'Black':
+                    current_position=piece.cord
+                    if current_position[0]==3 or current_grid[current_position[0]+1,current_position[1]]=="":
+                        continue
+                    if current_grid[current_position[0]+1,current_position[1]][0]=="R":
+                        if current_position[0]==2:
+                            my_list.append(("Goal"))
+                        else:
+                            jump_column=current_grid[:,current_position[1]]
+                            for i in range(current_position[0]+2,4):
+                                if jump_column[i]=="":
+                                    my_list.append((i,current_position[1]))
+                                    break
+                                elif jump_column[i][0]=="B":
+                                    break
+                                elif i==3:
+                                    my_list.append(("Goal"))
+                                elif jump_column[i][0]=="R":
+                                    continue
+                                
+            
+
+                else:
+                    current_position=piece.cord
+                    if current_position[0]==0 or current_grid[current_position[0]-1,current_position[1]]=="":
+                        continue
+                    if current_grid[current_position[0]-1,current_position[1]][0]=="B":
+                        if current_position[0]==1:
+                            my_list.append(("Goal"))
+                        else:
+                            jump_column=current_grid[:,current_position[1]]
+                            for i in range(current_position[0]-2,0,-1):
+                                if jump_column[i]=="":
+                                    my_list.append((i,current_position[1]))
+                                    break
+                                elif jump_column[i][0]=="R":
+                                    break
+                                elif i==0:
+                                    my_list.append(("Goal"))
+                                elif jump_column[i][0]=="B":
+                                    continue
+                                
+            possible_moves[piece.name]=my_list
+        return possible_moves                       
+                                
+
              
     def get_all_possible_moves(self):
         dict_1=self.get_spawns()
         dict_2=self.get_diagonal_moves()
         dict_3=self.get_attacks()
+        dict_4=self.get_jumps()
 
 
-        all_moves={'spawns':dict_1,'diagonals':dict_2,'attacks':dict_3}
+        all_moves={'spawns':dict_1,'diagonals':dict_2,'attacks':dict_3,'jumps':dict_4}
 
         return all_moves
 
@@ -234,6 +280,25 @@ class Client:
         grid_a[opponent_cord[0],opponent_cord[1]]=piece
         
         return grid_a
+    
+    def jump_move(self,piece,dest):
+        grid_d= self.grid.grid_mat
+        if dest==(None,None):
+            for pawn in self.player.pawns:
+                if pawn.name==piece:
+                    current_cord=pawn.cord
+                    grid_d[current_cord[0],current_cord[1]]=""
+                    pawn.cord=dest
+                    self.player.score+=1
+            return self.grid
+
+        grid_d[dest[0],dest[1]]=piece
+        for pawn in self.player.pawns:
+            if pawn.name==piece:
+                current_cord=pawn.cord
+                grid_d[current_cord[0],current_cord[1]]=""
+                pawn.cord=dest
+        return self.grid
 
 
 
@@ -270,6 +335,15 @@ while Black_player.score<WinningScore and Red_player.score<WinningScore:
             if i=='Goal':
                 i=(None,None)
             move_list.append(('diagonal',piece,i))
+
+    jumps=Possible_actions['jumps']
+    for piece in jumps.keys():
+        for i in jumps[piece]:
+            print("{0}. Jump with piece {1} to {2}".format(move_no,piece,i))
+            move_no+=1
+            if i=='Goal':
+                i=(None,None)
+            move_list.append(('jump',piece,i))
             
     
     attacks=Possible_actions['attacks']
@@ -292,6 +366,8 @@ while Black_player.score<WinningScore and Red_player.score<WinningScore:
         player_interface.insert(dest)
     elif move_type=='diagonal':
         player_interface.diagonal_move(move_piece,dest)
+    elif move_type=='jump':
+        player_interface.jump_move(move_piece,dest)
     elif move_type=='attack':
         player_interface.attack_move(move_piece,dest)
 
