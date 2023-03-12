@@ -25,10 +25,14 @@ class Client:
 
     def attack_move(self,piece_name,piece_to_attack_name):
         piece = self.board.get_piece_by_name(piece_name)
-        piece_to_attack = self.board.get_piece_by_name(piece_to_attack_name)
+        if type(piece_to_attack_name) == str:
+            piece_to_attack = self.board.get_piece_by_name(piece_to_attack_name)
+        else:
+            piece_to_attack = self.board.get_piece_by_pos(piece_to_attack_name)
         row, col = piece_to_attack.row, piece_to_attack.col
         self.board.remove_piece(piece_to_attack)
         self.board.move_piece(piece, row, col)
+        return self.board
     
     def jump_move(self,piece_name,dest):
         piece = self.board.get_piece_by_name(piece_name)

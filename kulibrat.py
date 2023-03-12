@@ -3,7 +3,7 @@ from kulibrat.board import Board
 from kulibrat.action import Action
 from kulibrat.client import Client
 from agent import random_agent
-#from agent import minimax_agent
+from agent import minimax_agent
 
 def check_locked_state(actions=Action):
     count=0
@@ -28,7 +28,8 @@ player=Black_player
 game_intro=("\nHow would you like to play?\n"
             "0. Human vs. Human\n"
             "1. Human vs. Random Agent\n"
-            "2. Human vs Minimax Agent\n")
+            "2. Human vs Minimax Agent\n"
+            "3. Minimax Agent vs Random Agent\n")
 print(game_intro)
 game_mode=int(input())
 
@@ -48,9 +49,12 @@ if game_mode==1 or game_mode==2:
     elif human_color==0 and game_mode==2:
         Black_player.player_type="Human"
         Red_player.player_type="Minimax Agent"
-else:
+elif game_mode == 0:
     Black_player.player_type="Human"
     Red_player.player_type="Human"
+else:
+    Black_player.player_type="Minimax Agent"
+    Red_player.player_type="Random Agent"
 
 
 
@@ -112,7 +116,6 @@ while game_board.winner() == None:
                 dest=(None,None)
             move_list.append(('jump',piece,dest))
             
-    
     attacks=Possible_actions['attacks']
     for piece in attacks.keys():
         for dest in attacks[piece]:
@@ -121,24 +124,22 @@ while game_board.winner() == None:
             move_no+=1
             move_list.append(('attack',piece,piece_to_attack))
     
-    """
+    
     if player.player_type == "Minimax Agent":
-        evaluation, move = minimax_agent.minimax(my_grid, 3, player, opponent)
+        evaluation, move = minimax_agent.minimax(game_board, 3, player.color)
         move_type=move[0]
         move_piece=move[1]
         dest=move[2]
-    """
-
-    #else:
-    if player.player_type=="Human":
-        InputAction= int(input("\nI choose action number:\n"))
-    else:
-        InputAction=random_agent.random_action([i for i in range(0,len(move_list))])
     
-    move= move_list[InputAction]
-    move_type=move[0]
-    move_piece=move[1]
-    dest=move[2]
+    else:
+        if player.player_type=="Human":
+            InputAction= int(input("\nI choose action number:\n"))
+        else:
+            InputAction=random_agent.random_action([i for i in range(0,len(move_list))])
+        move= move_list[InputAction]
+        move_type=move[0]
+        move_piece=move[1]
+        dest=move[2]
     
     if move_type=='spawn':
         player_interface.insert(move_piece, dest)
