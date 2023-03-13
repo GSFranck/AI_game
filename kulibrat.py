@@ -5,14 +5,18 @@ from kulibrat.client import Client
 from agent import random_agent
 from agent import minimax_agent
 
-def check_locked_state(actions=Action):
+def is_actions(actions=Action):
     count=0
     Possible_actions=actions.get_all_possible_moves()
     #print(Possible_actions)
     for key in Possible_actions.keys():
         for move_type in Possible_actions[key].values():    
             count+=len(move_type)
-    return count
+    #print(count)
+    if count == 0:
+        return False
+    else:
+        return True
 
 WinningScore=5#int(input("Max score:"))
 
@@ -53,31 +57,16 @@ elif game_mode == 0:
     Black_player.player_type="Human"
     Red_player.player_type="Human"
 else:
-    Black_player.player_type="Minimax Agent"
-    Red_player.player_type="Random Agent"
+    Black_player.player_type="Random Agent"
+    Red_player.player_type="Minimax Agent"
 
 
 
 round_count=1
-evaluation = 0
+#evaluation = 0
 
 while game_board.winner() == None:
     player_interface=Client(player.color, game_board)
-
-    if player.color=='Black':
-        Black_move_count=check_locked_state(Black_actions)
-
-        if Black_move_count==0:
-            player_actions=Red_actions
-            player=Red_player
-            opppent=Black_player
-    if player.color=='Red':
-        Red_move_count=check_locked_state(Red_actions)
-
-        if Red_move_count==0:
-            player_actions=Black_actions
-            player=Black_player
-            opppent=Red_player
 
     print("********* ROUND {0} ********\n\n".format(round_count))
     print("Player turn: {0}".format(player.color))
@@ -148,32 +137,40 @@ while game_board.winner() == None:
     elif move_type=='jump':
         player_interface.jump_move(move_piece,dest)
     elif move_type=='attack':
-        print(dest)
         player_interface.attack_move(move_piece,dest)
+    
+    # Change player turn
+    color = player.color
+    if color == "Black":
+        #Red_posssible_actions = Red_actions.get_all_possible_moves()
+        # Check if board is locked
+        if not is_actions(player_actions) and not is_actions(Red_actions):
+            game_board.is_locked(player.color, True)
+        # Check if the other player has any moves if not dont change turn
+        elif not is_actions(Red_actions):
+            pass
+        # change turn
+        else:
+            player_actions=Red_actions
+            player = Red_player
 
+    if color == "Red":
+        #Black_posssible_actions = Black_actions.get_all_possible_moves()
+        if not is_actions(player_actions) and not is_actions(Black_actions):
+            game_board.is_locked(player.color, True)
+        elif not is_actions(Black_actions):
+            pass
+        else:
+            player = Black_player
+            player_actions=Black_actions
+                                       
     if game_board.winner() != None:
-        print("{0} WINS THE GAME!!!!".format(game_board.winner()))
+            game_board.draw_grid()
+            print("The score is:")
+            print("Red: {0}".format(game_board.red_score))
+            print("Black: {0}".format(game_board.black_score))
+            print("{0} WINS THE GAME!!!!".format(game_board.winner()))
 
-    Black_move_count=check_locked_state(Black_actions)
-    Red_move_count=check_locked_state(Red_actions)
-    Statelocked=Black_move_count+Red_move_count
-    if Statelocked==0:
-        if player.color=='Black':
-            print("Red Player wins, due to the Black player locking the game")
-            break
-        elif player.color=='Red':
-            print("Black Player wins, due to the Red player locking the game")
-            break
-    
-    if player.color=='Black' and Black_move_count>0:
-        player_actions=Red_actions
-        player=Red_player
-        opppent=Black_player
-    elif player.color=='Red' and Red_move_count>0:
-        player_actions=Black_actions
-        player=Black_player
-        opppent=Red_player
-    
     round_count+=1
 
     

@@ -86,11 +86,20 @@ class Board:
         elif color == "Red":
             self.red_score+=1
     
-    def winner(self):
+    def is_locked(self, loser_color=None, locked=False):
+        if locked:
+            if loser_color == "Black":
+                return self.winner("Red")
+            else:
+                return self.winner("Black")
+    
+    def winner(self, winner_color=None):
         if self.black_score == self.max_score:
             return "BLACK"
         elif self.red_score == self.max_score:
             return "RED"
+        elif winner_color != None:
+            return winner_color
         
         return None 
     
