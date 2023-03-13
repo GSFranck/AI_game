@@ -115,29 +115,34 @@ while game_board.winner() == None:
     
     
     if player.player_type == "Minimax Agent":
-        evaluation, move = minimax_agent.minimax(game_board, 3, player.color)
-        move_type=move[0]
-        move_piece=move[1]
-        dest=move[2]
+        evaluation, move = minimax_agent.minimax(game_board, 5, player.color)
+        if move == None:
+            is_legal_moves = False
+        else:
+            move_type=move[0]
+            move_piece=move[1]
+            dest=move[2]
     
     else:
         if player.player_type=="Human":
             InputAction= int(input("\nI choose action number:\n"))
         else:
             InputAction=random_agent.random_action([i for i in range(0,len(move_list))])
+            
         move= move_list[InputAction]
         move_type=move[0]
         move_piece=move[1]
         dest=move[2]
     
-    if move_type=='spawn':
-        player_interface.insert(move_piece, dest)
-    elif move_type=='diagonal':
-        player_interface.diagonal_move(move_piece,dest)
-    elif move_type=='jump':
-        player_interface.jump_move(move_piece,dest)
-    elif move_type=='attack':
-        player_interface.attack_move(move_piece,dest)
+    if is_legal_moves:
+        if move_type=='spawn':
+            player_interface.insert(move_piece, dest)
+        elif move_type=='diagonal':
+            player_interface.diagonal_move(move_piece,dest)
+        elif move_type=='jump':
+            player_interface.jump_move(move_piece,dest)
+        elif move_type=='attack':
+            player_interface.attack_move(move_piece,dest)
     
     # Change player turn
     color = player.color

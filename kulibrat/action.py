@@ -119,7 +119,7 @@ class Action:
                 my_list=[]
                 if piece.row!=None:
                     current_position=(piece.row, piece.col)
-                    if current_position[0]==3:
+                    if current_position[0]==0:
                         continue
         
                     attack_position=(current_position[0]-1,current_position[1])

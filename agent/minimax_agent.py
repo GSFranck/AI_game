@@ -5,13 +5,16 @@ from copy import deepcopy
 from kulibrat.board import Board
 from kulibrat.client import Client
 from kulibrat.action import Action
+from agent import evaluation_functions
 
-def minimax(board, depth, color, best_move=None):
-    #print(board)
-    if depth == 0 or board.winner() != None: # or win or lock
-        return evaluate_result(board), best_move
-    
-    #print(player.color)
+#eval_func = evaluation_functions.score()
+
+def minimax(board, depth, color, best_move=None, locked_state = False):
+    if len(get_all_results(board, "Black")) + len(get_all_results(board, "Red")) == 0:
+        locked_state = True
+    if depth == 0 or board.winner() != None or locked_state: 
+        return score(board), best_move
+
     if color == "Black":
         max_player = True
     else:
@@ -20,6 +23,9 @@ def minimax(board, depth, color, best_move=None):
     if max_player:
         maxEval = float('-inf')
         best_move = None
+        if len(get_all_results(board, color)) == 0:
+            evaluation = minimax(board, depth, "Red", best_move)[0]
+
         for result in get_all_results(board, color):
             evaluation = minimax(result[0], depth-1, "Red", best_move)[0]
             maxEval = max(maxEval, evaluation)
@@ -31,6 +37,9 @@ def minimax(board, depth, color, best_move=None):
     else:
         minEval = float('inf')
         best_move = None
+        if len(get_all_results(board, color)) == 0:
+            evaluation = minimax(board, depth, "Black", best_move)[0]
+
         for result in get_all_results(board, color):
             evaluation = minimax(result[0], depth-1, "Black", best_move)[0]
             minEval = min(minEval, evaluation)
@@ -44,9 +53,6 @@ def simulate_move(move, client):
     move_type=move[0]
     move_piece_name=move[1]
     dest=move[2]
-    #print(move_type)
-    #print(move_piece_name)
-    #print(dest)
     if move_type=='spawn':
         return client.insert(move_piece_name, dest)
     elif move_type=='diagonal':
@@ -90,32 +96,15 @@ def get_all_results(board, color):
             move_no+=1
             move_list.append(('attack',piece,piece_to_attack))
     
-    #print(move_list)
     for move in move_list:
         temp_board = deepcopy(board)
         interface = Client(color, temp_board)
-        #print(temp_grid.get_grid())
-        result = simulate_move(move, interface)  
-        #print(move)
+        result = simulate_move(move, interface)
         results.append((result, move))
-    #print(move_list)
-    #print(results[1].get_grid())
     return results
 
-def evaluate_result(board):
-    # print(player.score)
+def score(board):
     return board.black_score - board.red_score
 
 
 
-"""""
-
-player_ = Player("Black")
-opponent_ = Player("Red")
-grid = Grid()
-get_all_results(opponent_, player_, grid)
-eval, best_move = minimax(grid, 8, player_, opponent_)
-print(eval)
-print(best_move)
-
-"""""

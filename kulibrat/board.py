@@ -47,6 +47,41 @@ class Board:
             self.grid.append([])
             for col in range(COLS):
                 self.grid[row].append(0)
+    
+    def get_pieces_on_grid(self, color):
+        pieces = []
+        for piece in self.get_pieces(color):
+            if piece.row != None:
+                pieces.append(piece)
+        return pieces
+
+    def get_pieces_on_goal(self, color):
+        pieces = []
+        if color == "Black": 
+            for piece in self.get_pieces(color):
+               if piece.row == 3:
+                   pieces.append(piece)
+            return pieces
+
+        else: 
+            for piece in self.get_pieces(color):
+                if piece.row == 0:
+                    pieces.append(piece) 
+            return pieces      
+    
+    def get_distance_from_start(self, color):
+        distance = 0
+        if color == "Black": 
+            for piece in self.get_pieces(color):
+               if piece.row != None:
+                   distance += piece.row 
+            return distance
+
+        else: 
+            for piece in self.get_pieces(color):
+               if piece.row != None:
+                   distance += 3 - piece.row 
+            return distance
         
     def draw_grid(self):
         print_values=[]
@@ -95,9 +130,9 @@ class Board:
     
     def winner(self, winner_color=None):
         if self.black_score == self.max_score:
-            return "BLACK"
+            return "Black"
         elif self.red_score == self.max_score:
-            return "RED"
+            return "Red"
         elif winner_color != None:
             return winner_color
         
