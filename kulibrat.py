@@ -1,26 +1,31 @@
+import numpy as np
+
 from kulibrat.player import Player
 from kulibrat.board import Board
 from kulibrat.action import Action
 from kulibrat.client import Client
 from agent import random_agent
-from agent import minimax_agent
+from agent import alpha_beta_agent
+from agent.evaluation_functions import EvaluationFunctions
 
 def is_actions(actions=Action):
     count=0
     Possible_actions=actions.get_all_possible_moves()
-    #print(Possible_actions)
     for key in Possible_actions.keys():
         for move_type in Possible_actions[key].values():    
             count+=len(move_type)
-    #print(count)
     if count == 0:
         return False
     else:
         return True
+WinningScore = 5 #int(input("Max score:"))
+depth = 5 # minimax search depth
+locked_state = False
+is_legal_moves = True
+round_count=1
 
-WinningScore=5#int(input("Max score:"))
-
-game_board=Board()
+eval_funcs = EvaluationFunctions()
+game_board=Board(WinningScore)
 Black_player=Player("Black")
 Red_player=Player("Red")
 Black_actions=Action(Black_player.color,game_board)
@@ -60,12 +65,7 @@ else:
     Black_player.player_type="Random Agent"
     Red_player.player_type="Minimax Agent"
 
-
-
-round_count=1
-#evaluation = 0
-
-while game_board.winner() == None:
+while game_board.winner(locked_state, player.color) == None:
     player_interface=Client(player.color, game_board)
 
     print("********* ROUND {0} ********\n\n".format(round_count))
@@ -74,8 +74,6 @@ while game_board.winner() == None:
     print("Red: {0}".format(game_board.red_score))
     print("Black: {0}".format(game_board.black_score))
     game_board.draw_grid()
-
-    #print("\nMinimax eval = ", evaluation)
 
     Possible_actions=player_actions.get_all_possible_moves()
     print("\nChoose among the following moves:")
@@ -115,7 +113,7 @@ while game_board.winner() == None:
     
     
     if player.player_type == "Minimax Agent":
-        evaluation, move = minimax_agent.minimax(game_board, 5, player.color)
+        evaluation, move = alpha_beta_agent.minimax_alpha_beta(game_board, depth, player.color, eval_funcs.linear, float('-inf'), float('inf'))
         if move == None:
             is_legal_moves = False
         else:
@@ -128,7 +126,7 @@ while game_board.winner() == None:
             InputAction= int(input("\nI choose action number:\n"))
         else:
             InputAction=random_agent.random_action([i for i in range(0,len(move_list))])
-            
+
         move= move_list[InputAction]
         move_type=move[0]
         move_piece=move[1]
@@ -147,10 +145,10 @@ while game_board.winner() == None:
     # Change player turn
     color = player.color
     if color == "Black":
-        #Red_posssible_actions = Red_actions.get_all_possible_moves()
         # Check if board is locked
         if not is_actions(player_actions) and not is_actions(Red_actions):
-            game_board.is_locked(player.color, True)
+            locked_state = True
+            player = Red_player
         # Check if the other player has any moves if not dont change turn
         elif not is_actions(Red_actions):
             pass
@@ -160,21 +158,21 @@ while game_board.winner() == None:
             player = Red_player
 
     if color == "Red":
-        #Black_posssible_actions = Black_actions.get_all_possible_moves()
         if not is_actions(player_actions) and not is_actions(Black_actions):
-            game_board.is_locked(player.color, True)
+            locked_state = True
+            player = Black_player
         elif not is_actions(Black_actions):
             pass
         else:
             player = Black_player
             player_actions=Black_actions
                                        
-    if game_board.winner() != None:
+    if game_board.winner(locked_state, player.color) != None:
             game_board.draw_grid()
             print("The score is:")
             print("Red: {0}".format(game_board.red_score))
             print("Black: {0}".format(game_board.black_score))
-            print("{0} WINS THE GAME!!!!".format(game_board.winner()))
+            print("{0} WINS THE GAME!!!!".format(game_board.winner(locked_state, player.color)))
 
     round_count+=1
 

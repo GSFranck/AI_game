@@ -5,15 +5,12 @@ from copy import deepcopy
 from kulibrat.board import Board
 from kulibrat.client import Client
 from kulibrat.action import Action
-from agent import evaluation_functions
 
-#eval_func = evaluation_functions.score()
-
-def minimax(board, depth, color, best_move=None, locked_state = False):
+def minimax_alpha_beta(board, depth, color, eval_func, alpha, beta, best_move=None, locked_state = False):
     if len(get_all_results(board, "Black")) + len(get_all_results(board, "Red")) == 0:
         locked_state = True
-    if depth == 0 or board.winner() != None or locked_state: 
-        return score(board), best_move
+    if depth == 0 or board.winner(locked_state, color) != None: 
+        return eval_func(board, color, locked_state), best_move
 
     if color == "Black":
         max_player = True
@@ -21,30 +18,40 @@ def minimax(board, depth, color, best_move=None, locked_state = False):
         max_player = False
 
     if max_player:
-        maxEval = float('-inf')
-        best_move = None
+        
         if len(get_all_results(board, color)) == 0:
-            evaluation = minimax(board, depth, "Red", best_move)[0]
+            maxEval = eval_func(board, color, locked_state)
+            best_move = None
+        else:
+            maxEval = float('-inf')
+            best_move = None
+            for result in get_all_results(board, color):
+                evaluation = minimax_alpha_beta(result[0], depth-1, "Red", eval_func, alpha, beta, best_move)[0]
+                maxEval = max(maxEval, evaluation)
+                alpha = max(alpha, evaluation)
+                if maxEval == evaluation:
+                    best_move = result[1]
+                if beta <= alpha:
+                    break
 
-        for result in get_all_results(board, color):
-            evaluation = minimax(result[0], depth-1, "Red", best_move)[0]
-            maxEval = max(maxEval, evaluation)
-            if maxEval == evaluation:
-                best_move = result[1]
-            
         return maxEval, best_move
     
     else:
-        minEval = float('inf')
-        best_move = None
         if len(get_all_results(board, color)) == 0:
-            evaluation = minimax(board, depth, "Black", best_move)[0]
+            minEval = eval_func(board, color, locked_state)
+            best_move = None
 
-        for result in get_all_results(board, color):
-            evaluation = minimax(result[0], depth-1, "Black", best_move)[0]
-            minEval = min(minEval, evaluation)
-            if minEval == evaluation:
-                best_move = result[1]
+        else:
+            minEval = float('inf')
+            best_move = None
+            for result in get_all_results(board, color):
+                evaluation = minimax_alpha_beta(result[0], depth-1, "Black", eval_func, alpha, beta, best_move)[0]
+                minEval = min(minEval, evaluation)
+                beta = min(beta, evaluation)
+                if minEval == evaluation:
+                    best_move = result[1]
+                if beta <= alpha:
+                    break
                     
         return minEval, best_move
 
@@ -53,14 +60,14 @@ def simulate_move(move, client):
     move_type=move[0]
     move_piece_name=move[1]
     dest=move[2]
-    if move_type=='spawn':
-        return client.insert(move_piece_name, dest)
+    if move_type=='jump':
+        return client.jump_move(move_piece_name, dest)
     elif move_type=='diagonal':
         return client.diagonal_move(move_piece_name,dest)
-    elif move_type=='jump':
-        return client.jump_move(move_piece_name,dest)
     elif move_type=='attack':
         return client.attack_move(move_piece_name,dest)
+    elif move_type=='spawn':
+        return client.insert(move_piece_name,dest)
 
 def get_all_results(board, color):
     results = []
@@ -103,8 +110,6 @@ def get_all_results(board, color):
         results.append((result, move))
     return results
 
-def score(board):
-    return board.black_score - board.red_score
 
 
 

@@ -6,7 +6,6 @@ class Client:
         self.color=color
         self.board=board
 
-    # Note: here piece
     def insert(self,piece_name, dest):
         piece = self.board.get_piece_by_name(piece_name)
         self.board.move_piece(piece, dest[0], dest[1])

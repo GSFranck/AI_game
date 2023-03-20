@@ -121,20 +121,14 @@ class Board:
         elif color == "Red":
             self.red_score+=1
     
-    def is_locked(self, loser_color=None, locked=False):
-        if locked:
-            if loser_color == "Black":
-                return self.winner("Red")
+    def winner(self, locked_state, color=None):
+        if locked_state:
+            return color
+        else:
+            if self.black_score == self.max_score:
+                return "Black"
+            elif self.red_score == self.max_score:
+                return "Red"
             else:
-                return self.winner("Black")
-    
-    def winner(self, winner_color=None):
-        if self.black_score == self.max_score:
-            return "Black"
-        elif self.red_score == self.max_score:
-            return "Red"
-        elif winner_color != None:
-            return winner_color
-        
-        return None 
-    
+                return None 
+
