@@ -7,8 +7,7 @@ In this implementation of the game Kulibrat one can via a command-line interface
 ### To do
 * Clone this repository or download it as a zip
 * Unpack it in an empty folder
-* Navigate to the folder with the command
-* Run the game with the command 
+* Navigate to the folder with the command 
 ```
 cd /path/to/AI_GAME
 ```
